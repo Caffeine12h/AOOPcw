@@ -35,7 +35,7 @@ public class NumberleView implements Observer {
     public void initializeFrame() {
         currentFieldIndex = 0;
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(950, 400);
+        frame.setSize(700, 500);
         frame.setLayout(new BorderLayout());
 
         JPanel center = new JPanel();
@@ -46,10 +46,14 @@ public class NumberleView implements Observer {
         // Set the layout of the input panel
         inputPanel.setLayout(new BoxLayout(inputPanel, BoxLayout.Y_AXIS));
 
+
         for (int i = 0; i < 6; i++) {
             JPanel rowPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+
             for (int j = 0; j < 7; j++) {
-                JTextField field = new JTextField(1);
+                JTextField field = new JTextField();
+                field.setPreferredSize(new Dimension(40, 40));
+//                field.setMinimumSize(new Dimension(40, 40));
                 field.setEditable(false);
                 rowPanel.add(field);
                 inputTextFields[i][j] = field;
@@ -60,8 +64,14 @@ public class NumberleView implements Observer {
 
 
 
+
         // Add Enter Button
         JButton submitButton = new JButton("Enter");
+        Font font1 = new Font("Arial", Font.BOLD, 16);
+        submitButton.setFont(font1); // Setting the font
+
+        // Set the size of the Enter button
+        submitButton.setPreferredSize(new Dimension(100, 40));
         // Add Enter Button Listener
         submitButton.addActionListener(e -> {
             StringBuilder guess = new StringBuilder();
@@ -108,7 +118,8 @@ public class NumberleView implements Observer {
             numButtons[i] = new JButton(curText);
             numButtons[i].setEnabled(true);
             numButtons[i].setBounds(0,0,20,20);// Setting the button size
-            //
+            numButtons[i].setFont(font1); // Setting the font
+            // Add Number Button Listener
             numButtons[i].addActionListener(e -> {
                 checkLength(curText);
             });
@@ -119,6 +130,7 @@ public class NumberleView implements Observer {
 
         // Add New Game Button
         newButton.setEnabled(firstValidGuessMade); // Set the enabled state of the New Game button
+        newButton.setFont(font1); // Setting the font
         newButton.addActionListener((ActionEvent e) -> {
             currentFieldIndex = 0; // Reset to first text box
             controller.startNewGame();
@@ -145,6 +157,7 @@ public class NumberleView implements Observer {
         for (int i = 0; i < 6; i++) {
             String curOperation = operations[i];
             operaButtons[i] = new JButton(curOperation);
+            operaButtons[i].setFont(font1); // Setting the font
             // Add Operation Button Listener
             operaButtons[i].addActionListener(e -> {
                 if (curOperation.equals("Del")) {
@@ -181,7 +194,10 @@ public class NumberleView implements Observer {
         }
         else{
             // Set the text of the current text field
-            inputTextFields[6-controller.getRemainingAttempts()][currentFieldIndex].setText(curText);
+            Font font = new Font("Arial", Font.PLAIN, 20);
+            inputTextFields[6-controller.getRemainingAttempts()][currentFieldIndex].setFont(font); // Setting the font
+            inputTextFields[6-controller.getRemainingAttempts()][currentFieldIndex].setHorizontalAlignment(JTextField.CENTER);
+            inputTextFields[6-controller.getRemainingAttempts()][currentFieldIndex].setText(curText); // Setting the text from number buttons
             currentFieldIndex++;
         }
     }
