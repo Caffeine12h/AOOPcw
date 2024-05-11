@@ -7,11 +7,20 @@ public class CLIApp {
 
         // Creating a model instance and initialising the game
         NumberleModel model = new NumberleModel();
+
+        System.out.println("Do you want to enable random flag? (yes/no)");
+        String randomFlagInput = scanner.nextLine();
+        boolean randomFlag = randomFlagInput.equalsIgnoreCase("yes");
+        System.out.println("Do you want to enable display flag? (yes/no)");
+        String displayFlagInput = scanner.nextLine();
+        boolean displayFlag = displayFlagInput.equalsIgnoreCase("yes");
+        model.setFlags(randomFlag, displayFlag);
+
         model.initialize();
 
         String equation;
         String result;
-
+        System.out.println("Welcome to Numberle!");
         // game loop
         do {
             System.out.print("Enter equation: ");
