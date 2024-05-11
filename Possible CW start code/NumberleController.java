@@ -29,10 +29,6 @@ public class NumberleController {
         return model.getTargetEquation();
     }
 
-    public StringBuilder getCurrentGuess() {
-        return model.getCurrentGuess();
-    }
-
     public int getRemainingAttempts() {
         return model.getRemainingAttempts();
     }
@@ -47,4 +43,9 @@ public class NumberleController {
 
     public void setColor() {model.setColor();}
 
+    public void setFlags(boolean randomFlag, boolean displayFlag) {model.setFlags(randomFlag, displayFlag);}
+
+    public boolean getDisplayFlag() {
+        return model.getDisplayFlag();
+    }
 }
