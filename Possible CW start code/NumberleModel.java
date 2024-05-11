@@ -1,6 +1,5 @@
 // NumberleModel.java
 
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -9,31 +8,26 @@ import java.util.List;
 import java.util.Observable;
 import java.util.Random;
 
-
 public class NumberleModel extends Observable implements INumberleModel {
     private StringBuilder currentGuess;
     private int remainingAttempts;
     private boolean gameWon;
     private boolean validFlag = false;
     private boolean randomFlag = false;
+    private boolean displayFlag = false;
     private String targetEquation;
     private final List<List<ColoredChar>> coloredChars = new ArrayList<>();
     ColorState colorState;
-
-
     GrayState grayState = new GrayState();
     GreenState greenState = new GreenState();
     OrangeState orangeState = new OrangeState();
 
-    // For CLI Color display
-    private static final String ANSI_RESET = "\u001B[0m";
-    private static final String ANSI_GREEN = "\u001B[32m";
-    private static final String ANSI_YELLOW = "\u001B[33m";
-    private static final String ANSI_GRAY = "\u001B[90m";
-
     /**
+     * @invariant remainingAttempts >= 0 && remainingAttempts <= 6
      * Initializes the model's state. Sets the target equation, resets the current guess, remaining attempts, and game state.
-     * @post The model's state is initialized with the target equation set to "6*1-2=4",
+     * @requires targetEquation != null
+     * @ensures currentGuess != null && remainingAttempts >= 0 && remainingAttempts <= 6
+     * @post The model's state is initialized with the target equation,
      * the current guess set to "       ", the remaining attempts set to MAX_ATTEMPTS,
      * and the game state set to not won.
      */
@@ -44,19 +38,18 @@ public class NumberleModel extends Observable implements INumberleModel {
         }
         else
             targetEquation = "6*1-2=4";
-        System.out.println("For testing, the targetEquation is: " + targetEquation);
-
+        if(displayFlag)
+            System.out.println("Target Equation: " + targetEquation);
         currentGuess = new StringBuilder("       ");
         remainingAttempts = MAX_ATTEMPTS;
         assert remainingAttempts >= 0 && remainingAttempts <= 6 : "remainingAttempts should be between 0 and 6";
+        assert currentGuess.length() == 7 : "Current guess length should be 7";
         gameWon = false;
         //Initialize coloredChars
         coloredChars.clear();
         // Observer
         setChanged();
         notifyObservers();
-
-        assert targetEquation.length() == 7 : "Target equation length should be 7";
     }
 
     private String getRandomEquation() {
@@ -82,20 +75,22 @@ public class NumberleModel extends Observable implements INumberleModel {
 
     /**
      * Calculates the result of the given equation.
-        * @param s The equation to be calculated.
-        * @return The result of the given equation.
+     * @invariant res >= 0 && preVal >= 0
+     * @requires s != null && s.length() > 0
+     * @ensures \result == \old(calculator(s))
+     * @pre The input string is not null
+     * @post The result of the given equation is returned
+     * @param s The equation to be calculated.
+     * @return The result of the given equation.
      */
     public static int calculator(String s) {
         assert s != null : "Input string should not be null";
         // Add a '+' before and after for ease of processing
-        // For example: s = "6*1-2", processed s = "+6*1-2+"
         s = "+" + s + "+";
         int res = 0, preVal = 0; // preVal is used to store the previous number
         char preOp = '+'; // preOp is used to save the previous operator
-
         for(int i = 0; i < s.length(); i++) {
-            char c = s.charAt(i); // current character
-
+            char c = s.charAt(i);
             // If it is a number, calculate the value of the current number
             if(Character.isDigit(c)) {
                 int val = c - '0';
@@ -104,7 +99,6 @@ public class NumberleModel extends Observable implements INumberleModel {
                     val = val * 10 + (s.charAt(i + 1) - '0');
                     i++;
                 }
-
                 // Decide what to do with the current number based on the previous operator
                 if (preOp == '+') { //
                     res += preVal;
@@ -127,6 +121,9 @@ public class NumberleModel extends Observable implements INumberleModel {
 
 
     /**
+     * @invariant equation.length() == 7
+     * @requires equation != null
+     * @ensures \result == true || \result == false
      * Processes the user's input. If the length of the input equation is 7 and the result of the equation is 8, updates the current guess and decreases the remaining attempts.
      * @param equation The user's input equation
      * @pre The equation is not null
@@ -148,7 +145,6 @@ public class NumberleModel extends Observable implements INumberleModel {
             } catch (Exception e) {
                 validFlag = false;
             }
-
             if(validFlag){
                 remainingAttempts--;
                 currentGuess = new StringBuilder(equation);
@@ -158,8 +154,6 @@ public class NumberleModel extends Observable implements INumberleModel {
                 result = true;
             }
         }
-
-        assert result == true || result == false : "Result should be either true or false";
         return result;
     }
 
@@ -171,9 +165,6 @@ public class NumberleModel extends Observable implements INumberleModel {
     @Override
     public boolean isGameOver() {
         return remainingAttempts <= 0 || gameWon;
-//        boolean result = remainingAttempts <= 0 || gameWon;
-//        assert result == true || result == false : "Result should be either true or false";
-//        return result;
     }
 
     /**
@@ -219,12 +210,29 @@ public class NumberleModel extends Observable implements INumberleModel {
     }
 
     /**
+     * Sets the flags.
+     * @invariant randomFlag == true || randomFlag == false
+     * @invariant displayFlag == true || displayFlag == false
+     */
+    public void setFlags(boolean randomFlag, boolean displayFlag) {
+        this.randomFlag = randomFlag;
+        this.displayFlag = displayFlag;
+    }
+    /**
+     * Gets the display flag.
+        * @return The display flag
+        */
+    @Override
+    public boolean getDisplayFlag() {
+        return displayFlag;
+    }
+
+    /**
      * Starts a new game. Reinitialize the model's state.
      * @post The model's state is reinitialized
      */
     @Override
     public void startNewGame() {
-
         initialize();
         setChanged();
         notifyObservers();
@@ -241,6 +249,9 @@ public class NumberleModel extends Observable implements INumberleModel {
 
     /**
      * Sets the color. Sets the color state of the colored characters based on the current guess and the target equation.
+     * @invariant colorState != null
+     * @requires currentGuess != null && targetEquation != null
+     * @ensures coloredChars.size() <= MAX_ATTEMPTS
      * @pre The current guess and the target equation are not null
      * @post The color state of the colored characters is set based on the current guess and the target equation
      */
@@ -254,11 +265,11 @@ public class NumberleModel extends Observable implements INumberleModel {
         List<ColoredChar> currentAttempt = new ArrayList<>();
 
         for (int i = 0; i < inputChars.length; i++) {
-            if (targetEquation.indexOf(inputChars[i]) == -1) {
+            if (targetEquation.indexOf(inputChars[i]) == -1) { // If the character is not in the target equation
                 colorState = grayState;
-            } else if (i < targetEquation.length() && targetChars[i] == inputChars[i]) {
+            } else if (i < targetEquation.length() && targetChars[i] == inputChars[i]) { // If the character is in the target equation and in the correct position
                 colorState = greenState;
-            } else {
+            } else { // If the character is in the target equation but in the wrong position
                 colorState = orangeState;
             }
             currentAttempt.add(new ColoredChar(inputChars[i], colorState));
@@ -271,9 +282,11 @@ public class NumberleModel extends Observable implements INumberleModel {
     }
 
 
-
     /**
      * Compares the input with the target equation and returns a string with the characters colored based on the comparison.
+        * @invariant input != null && target != null
+        * @requires input != null && target != null
+        * @ensures \result.length() > 0
         * @param input The input to be compared
         * @param target The target equation
         * @pre The input and the target equation are not null
@@ -285,14 +298,22 @@ public class NumberleModel extends Observable implements INumberleModel {
         assert target != null : "Target should not be null";
 
         StringBuilder result = new StringBuilder();
+        // For CLI Color display
+        String ANSI_RESET = "\u001B[0m";
+        String ANSI_GREEN = "\u001B[32m";
+        String ANSI_YELLOW = "\u001B[33m";
+        String ANSI_GRAY = "\u001B[90m";
 
         for (int i = 0; i < input.length(); i++) {
             if (input.charAt(i) == target.charAt(i)) {
-                result.append(ANSI_GREEN + input.charAt(i) + ANSI_RESET);
+//                result.append(ANSI_GREEN + input.charAt(i) + ANSI_RESET);
+                result.append("Included and in the right place: " + ANSI_GREEN + input.charAt(i) + ANSI_RESET + "\n");
             } else if (target.indexOf(input.charAt(i)) == -1) {
-                result.append(ANSI_GRAY + input.charAt(i) + ANSI_RESET);
+//                result.append(ANSI_GRAY + input.charAt(i) + ANSI_RESET);
+                result.append("Not included: " + ANSI_GRAY + input.charAt(i) + ANSI_RESET + "\n");
             } else {
-                result.append(ANSI_YELLOW + input.charAt(i) + ANSI_RESET);
+//                result.append(ANSI_YELLOW + input.charAt(i) + ANSI_RESET);
+                result.append("Included but not in the correct location: " + ANSI_YELLOW + input.charAt(i) + ANSI_RESET + "\n");
             }
         }
         assert result.length() > 0 : "Result should not be empty";
@@ -302,6 +323,8 @@ public class NumberleModel extends Observable implements INumberleModel {
 
     /**
      * Plays the game in the Command Line Interface (CLI).
+        * @requires equation != null
+        * @ensures \result.length() > 0
         * @param equation The input equation
         * @pre The equation is not null
         * @post The result is a string with the characters colored based on the comparison
@@ -309,10 +332,8 @@ public class NumberleModel extends Observable implements INumberleModel {
      */
     public String CLIPlay(String equation) {
         assert equation != null : "Equation should not be null";
-
         validFlag = processInput(equation);
         String result = validFlag ? compareCLI(currentGuess.toString(), targetEquation) : "Invalid Input!\n";
-
         if(validFlag) {
             if(isGameWon()) {
                 result += "\nCongratulations, You won!";
@@ -322,9 +343,7 @@ public class NumberleModel extends Observable implements INumberleModel {
                 result += "\n"+getRemainingAttempts() + " Attempts remaining.";
             }
         }
-
         assert result.length() > 0 : "Result should not be empty";
-
         return result;
     }
 
