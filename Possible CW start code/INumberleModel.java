@@ -17,4 +17,7 @@ public interface INumberleModel {
 
     List<List<ColoredChar>> getColor();
 
+    void setFlags(boolean randomFlag, boolean displayFlag);
+
+    boolean getDisplayFlag();
 }
